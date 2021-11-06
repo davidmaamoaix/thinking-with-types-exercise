@@ -1,5 +1,7 @@
 {-# LANGUAGE DataKinds, TypeOperators, KindSignatures, TypeFamilies #-}
 
+module TermsTypesAndKinds where
+
 import Prelude ()
 import GHC.TypeLits
 
