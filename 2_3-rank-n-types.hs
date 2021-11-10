@@ -15,7 +15,7 @@ runCont f = f id
 newtype Cont a = Cont { unCont :: forall r. (a -> r) -> r }
 
 instance Functor Cont where
-    fmap f (Cont ar) = Cont ($ ar f)
+    fmap f a = Cont (\k -> (unCont a) f)
 
 instance Applicative Cont where
     pure a = Cont ($ a)
