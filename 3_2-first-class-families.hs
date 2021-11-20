@@ -58,3 +58,34 @@ data MapListT :: (a -> Exp b) -> [a] -> Exp [b]
 type instance EvalT (MapListT _ '[]) = '[]
 type instance EvalT (MapListT f (x ': xs)) = EvalT (f x) ': EvalT (MapListT f xs)
 
+-- 10.2-ii
+data FoldR :: (a -> b -> Exp b) -> b -> [a] -> Exp b
+type instance EvalT (FoldR _ z '[]) = z
+type instance EvalT (FoldR f z (x ': xs)) = EvalT (f x (EvalT (FoldR f z xs)))
+
+data Pure :: a -> Exp a
+type instance EvalT (Pure x) = x
+
+data (=<<) :: (a -> Exp b) -> Exp a -> Exp b
+type instance EvalT (f =<< a) = EvalT (f (EvalT a))
+infixr 0 =<<
+
+data (<=<) :: (b -> Exp c) -> (a -> Exp b) -> a -> Exp c
+type instance EvalT ((f <=< g) x) = EvalT (f (EvalT (g x)))
+infixr 1 <=<
+
+data TyEq :: a -> b -> Exp Bool
+type instance EvalT (TyEq a b) = TyEqImpl a b
+
+type family TyEqImpl (a :: k) (b :: k) :: Bool where
+    TyEqImpl a a = 'True
+    TyEqImpl a b = 'False
+
+data Collapse :: [Constraint] -> Exp Constraint
+type instance EvalT (Collapse '[]) = (() :: Constraint)
+type instance EvalT (Collapse (x ': xs)) = (x, EvalT (Collapse xs))
+
+type All (c :: k -> Constraint) (ts :: [k]) = Collapse =<< MapListT (Pure1 c) ts
+
+data Pure1 :: (a -> b) -> a -> Exp b
+type instance EvalT (Pure1 f x) = f x
