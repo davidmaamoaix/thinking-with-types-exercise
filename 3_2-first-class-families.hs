@@ -13,6 +13,7 @@ module FirstClassFamilies where
 
 import Prelude hiding (fst)
 import Data.Kind (Constraint, Type)
+import Data.Monoid
 
 fst :: (a, b) -> a
 fst (a, _) = a
@@ -89,3 +90,23 @@ type All (c :: k -> Constraint) (ts :: [k]) = Collapse =<< MapListT (Pure1 c) ts
 
 data Pure1 :: (a -> b) -> a -> Exp b
 type instance EvalT (Pure1 f x) = f x
+
+data Map :: (a -> Exp b) -> f a -> Exp (f b)
+
+type instance EvalT (Map _ '[]) = '[]
+type instance EvalT (Map f (x ': xs)) = EvalT (f x) ': EvalT (Map f xs)
+
+type instance EvalT (Map _ 'Nothing) = 'Nothing
+type instance EvalT (Map f ('Just x)) = 'Just (EvalT (f x))
+
+type instance EvalT (Map _ ('Left a)) = 'Left a
+type instance EvalT (Map f ('Right b)) = 'Right (EvalT (f b))
+
+data Mappend :: a -> a -> Exp a
+type instance EvalT (Mappend '() '()) = '()
+type instance EvalT (Mappend (a :: Constraint) (b :: Constraint)) = (a, b)
+
+data Mempty :: k -> Exp k
+
+type instance EvalT (Mempty '()) = '()
+type instance EvalT (Mempty (c :: Constraint)) = (() :: Constraint)
